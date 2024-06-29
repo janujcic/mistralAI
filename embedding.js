@@ -1,4 +1,9 @@
 import fs from 'node:fs';
+import { config } from 'dotenv';
+
+config();
+
+const localPath = process.env.LOCAL_PATH;
 
 function extractFileName(path) {
     try {
@@ -25,6 +30,6 @@ function getObsidianDocument(path) {
     return `${fileName}\n\n${fileContents}`;
 }
 
-const path = "/mnt/c/Users/jujcic/iCloudDrive/iCloud~md~obsidian/Zettelkasten/The blank sheet note-taking system.md";
+const path = localPath;
 const documentContent = getObsidianDocument(path);
 console.log(documentContent);
