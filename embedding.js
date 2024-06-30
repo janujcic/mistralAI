@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { config } from 'dotenv';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 
 config();
 
@@ -30,6 +31,16 @@ function getObsidianDocument(path) {
     return `${fileName}\n\n${fileContents}`;
 }
 
+async function chunkText(text) {
+    const splitter = new RecursiveCharacterTextSplitter({
+        chunkSize: 250,
+        chunkOverlap: 40
+    });
+    const output = await splitter.createDocuments([text]);
+    return output
+}
+
 const path = localPath;
 const documentContent = getObsidianDocument(path);
-console.log(documentContent);
+const chunkedText = await chunkText(documentContent);
+console.log(chunkedText);
