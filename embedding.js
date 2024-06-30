@@ -51,14 +51,20 @@ async function embedChunks(textChunks) {
         model: 'mistral-embed',
         input: textChunks
     });
-    console.log(JSON.stringify(embeddingsResponse));
+    const embeddings = embeddingsResponse["data"].map(embedding => embedding.embedding);
+    const embeddingChunks = embeddings.map((value, index) => {
+       return {"content":textChunks[index], "embedding":value};
+    });
+    return embeddingChunks;
+
 }
 
 async function main() {
     const path = localPath;
     const documentContent = getObsidianDocument(path);
     const [chunksOutput, chunks] = await chunkText(documentContent);
-    embedChunks(chunks);
+    const embeddedChunks = await embedChunks(chunks);
+    console.log(embeddedChunks);
 }
 
 
