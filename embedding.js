@@ -2,15 +2,18 @@ import fs from 'node:fs';
 import { config } from 'dotenv';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import MistralClient from '@mistralai/mistralai';
+import { createClient } from '@supabase/supabase-js'
 
 
 config();
 
 const apiKey = process.env.MISTRAL_API_KEY;
-const client = new MistralClient(apiKey)
-const localPath = process.env.LOCAL_PATH;
 const supabaseApiKey = process.env.SUPABASE_API_KEY;
 const supabaseUrl = process.env.SUPABASE_URL;
+const localPath = process.env.LOCAL_PATH;
+
+const mistralClient = new MistralClient(apiKey)
+const supabaseClient = createClient(supabaseUrl, supabaseApiKey);
 
 function extractFileName(path) {
     try {
@@ -49,7 +52,7 @@ async function chunkText(text) {
 
 
 async function embedChunks(textChunks) {
-    const embeddingsResponse = await client.embeddings({
+    const embeddingsResponse = await mistralClient.embeddings({
         model: 'mistral-embed',
         input: textChunks
     });
