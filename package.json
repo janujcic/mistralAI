@@ -13,6 +13,7 @@
   "dependencies": {
     "@mistralai/mistralai": "^0.5.0",
     "dotenv": "^16.4.5",
-    "langchain": "^0.2.8"
+    "langchain": "^0.2.8",
+    "supabase": "^1.178.2"
   }
 }
