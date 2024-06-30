@@ -1,9 +1,13 @@
 import fs from 'node:fs';
 import { config } from 'dotenv';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import MistralClient from '@mistralai/mistralai';
+
 
 config();
 
+const apiKey = process.env.MISTRAL_API_KEY;
+const client = new MistralClient(apiKey)
 const localPath = process.env.LOCAL_PATH;
 
 function extractFileName(path) {
@@ -33,14 +37,29 @@ function getObsidianDocument(path) {
 
 async function chunkText(text) {
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 250,
+        chunkSize: 450,
         chunkOverlap: 40
     });
     const output = await splitter.createDocuments([text]);
-    return output
+    const textArray = output.map(chunk => chunk.pageContent);
+    return [output, textArray];
 }
 
-const path = localPath;
-const documentContent = getObsidianDocument(path);
-const chunkedText = await chunkText(documentContent);
-console.log(chunkedText);
+
+async function embedChunks(textChunks) {
+    const embeddingsResponse = await client.embeddings({
+        model: 'mistral-embed',
+        input: textChunks
+    });
+    console.log(JSON.stringify(embeddingsResponse));
+}
+
+async function main() {
+    const path = localPath;
+    const documentContent = getObsidianDocument(path);
+    const [chunksOutput, chunks] = await chunkText(documentContent);
+    embedChunks(chunks);
+}
+
+
+main();
