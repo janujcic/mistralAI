@@ -9,6 +9,8 @@ config();
 const apiKey = process.env.MISTRAL_API_KEY;
 const client = new MistralClient(apiKey)
 const localPath = process.env.LOCAL_PATH;
+const supabaseApiKey = process.env.SUPABASE_API_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
 
 function extractFileName(path) {
     try {
