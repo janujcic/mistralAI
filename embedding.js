@@ -11,6 +11,7 @@ const apiKey = process.env.MISTRAL_API_KEY;
 const supabaseApiKey = process.env.SUPABASE_API_KEY;
 const supabaseUrl = process.env.SUPABASE_URL;
 const localPath = process.env.LOCAL_PATH;
+const supabaseTable = process.env.SUPABASE_TABLE;
 
 const mistralClient = new MistralClient(apiKey)
 const supabaseClient = createClient(supabaseUrl, supabaseApiKey);
@@ -50,6 +51,13 @@ async function chunkText(text) {
     return [output, textArray];
 }
 
+async function createEmbedding(text) {
+    const embeddingsResponse = await mistralClient.embeddings({
+        model: 'mistral-embed',
+        input: textChunks
+    });
+    return embeddingsResponse.data[0].embedding;
+}
 
 async function embedChunks(textChunks) {
     const embeddingsResponse = await mistralClient.embeddings({
@@ -64,13 +72,20 @@ async function embedChunks(textChunks) {
 
 }
 
-async function main() {
-    const path = localPath;
+async function insertDataSupabase(data, table) {
+    await supabaseClient.from(table).insert(data);
+    console.log("Upload to supabase complete!");
+}
+
+async function uploadChunksToVectorDatabase(path) {
     const documentContent = getObsidianDocument(path);
     const [chunksOutput, chunks] = await chunkText(documentContent);
     const embeddedChunks = await embedChunks(chunks);
-    console.log(embeddedChunks);
+    insertDataSupabase(embeddedChunks, supabaseTable);
 }
 
+async function main(path) {
+    // uploadChunksToVectorDatabase(path);
+}
 
-main();
+main(localPath);
