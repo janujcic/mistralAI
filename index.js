@@ -136,7 +136,7 @@ async function uploadObsidianChunksToVectorDB(path, table) {
     insertDataSupabase(embeddedObsidianFiles, table);
 }
 
-async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp=0.6, responseFormat="json_object") {
+async function mistralChat(systemInstr, userInstr, model="open-mixtral-8x7b", temp=0.6, responseFormat="json_object") {
     const chatResponse = await mistralClient.chat({
         model: model,
         messages: [
@@ -151,9 +151,6 @@ async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp
     return chatResponse;
 }
 
-async function generateChatResponse(context, input) {
-
-}
 
 async function retrieveMatches(embedding) {
     const { data } = await supabaseClient.rpc('match_obsidian_docs', {
@@ -167,9 +164,11 @@ async function retrieveMatches(embedding) {
 async function mistralAnswer(input) { 
     const inputEmbedding = await createEmbedding(input);
     const contextData = await retrieveMatches(inputEmbedding);
-    const context = "Additional information: \n" + contextData[0].content; 
-    const mistralAnswer = mistralChat(context, input);
-    console.log(mistralAnswer);
+    
+    const context = "Additional information to be used when answering the question: \n" + contextData[0].content; 
+    console.log(context);
+    const mistralAnswer = await mistralChat("Answer the question using the provided additional information before the question.",  context + "\n" + input);
+    console.log(mistralAnswer.choices[0].message.content);
 }
 
 //uploadObsidianChunksToVectorDB(localPath, supabaseTable);
