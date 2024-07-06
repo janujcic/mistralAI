@@ -137,7 +137,7 @@ async function uploadObsidianChunksToVectorDB(path, table) {
 }
 
 async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp=0.6, responseFormat="json_object") {
-    const chatResponse = await client.chat({
+    const chatResponse = await mistralClient.chat({
         model: model,
         messages: [
             {role: 'system', content: systemInstr},
@@ -151,10 +151,29 @@ async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp
     return chatResponse;
 }
 
+async function generateChatResponse(context, input) {
 
-
-async function main(path, table) { 
-    //uploadObsidianChunksToVectorDB(path, table);
 }
 
-main(localPath, supabaseTable);
+async function retrieveMatches(embedding) {
+    const { data } = await supabaseClient.rpc('match_obsidian_docs', {
+        query_embedding: embedding, // Pass the embedding you want to compare
+        match_threshold: 0.75, // Choose an appropriate threshold for your data
+        match_count: 5, // Choose the number of matches
+    });
+    return data;
+}
+
+async function mistralAnswer(input) { 
+    const inputEmbedding = await createEmbedding(input);
+    const contextData = await retrieveMatches(inputEmbedding);
+    const context = "Additional information: \n" + contextData[0].content; 
+    const mistralAnswer = mistralChat(context, input);
+    console.log(mistralAnswer);
+}
+
+//uploadObsidianChunksToVectorDB(localPath, supabaseTable);
+
+const input = "How can I get out of a rut? How can I feel better and less anxious about all the problems currently in the world?"
+
+mistralAnswer(input);
