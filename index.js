@@ -165,10 +165,9 @@ async function mistralAnswer(input) {
     const inputEmbedding = await createEmbedding(input);
     const contextData = await retrieveMatches(inputEmbedding);
     
-    const context = "Additional information to be used when answering the question: \n" + contextData; 
+    const context = "Additional information to be used when answering the question: " + contextData.replaceAll("*", ""); 
     console.log(context);
-    const mistralAnswer = await mistralChat("Answer the question using the provided additional information before the question.",  context + "\n" + input);
-    console.log(mistralAnswer.choices[0]);
+    const mistralAnswer = await mistralChat("Answer the question using the provided additional information before the question.",  context + " - Question: " + input);
     console.log(mistralAnswer.choices[0].message.content);
 }
 
