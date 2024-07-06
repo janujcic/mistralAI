@@ -7,13 +7,13 @@ import { createClient } from '@supabase/supabase-js'
 
 config();
 
-const apiKey = process.env.MISTRAL_API_KEY;
+const mistralApiKey = process.env.MISTRAL_API_KEY;
 const supabaseApiKey = process.env.SUPABASE_API_KEY;
 const supabaseUrl = process.env.SUPABASE_URL;
 const localPath = process.env.LOCAL_PATH;
 const supabaseTable = process.env.SUPABASE_TABLE;
 
-const mistralClient = new MistralClient(apiKey)
+const mistralClient = new MistralClient(mistralApiKey)
 const supabaseClient = createClient(supabaseUrl, supabaseApiKey);
 
 function extractFileName(path) {
@@ -82,6 +82,21 @@ async function uploadChunksToVectorDatabase(path) {
     const [chunksOutput, chunks] = await chunkText(documentContent);
     const embeddedChunks = await embedChunks(chunks);
     insertDataSupabase(embeddedChunks, supabaseTable);
+}
+
+async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp=0.6, responseFormat="json_object") {
+    const chatResponse = await client.chat({
+        model: model,
+        messages: [
+            {role: 'system', content: systemInstr},
+            {role: 'user', content: userInstr}
+        ],
+        temperature: temp,
+        responseFormat: {
+            type: responseFormat
+        }
+    });
+    return chatResponse;
 }
 
 async function main(path) {
