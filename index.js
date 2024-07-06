@@ -158,16 +158,17 @@ async function retrieveMatches(embedding) {
         match_threshold: 0.75, // Choose an appropriate threshold for your data
         match_count: 5, // Choose the number of matches
     });
-    return data;
+    return data.map(chunk => chunk.content).join(" ");
 }
 
 async function mistralAnswer(input) { 
     const inputEmbedding = await createEmbedding(input);
     const contextData = await retrieveMatches(inputEmbedding);
     
-    const context = "Additional information to be used when answering the question: \n" + contextData[0].content; 
+    const context = "Additional information to be used when answering the question: \n" + contextData; 
     console.log(context);
     const mistralAnswer = await mistralChat("Answer the question using the provided additional information before the question.",  context + "\n" + input);
+    console.log(mistralAnswer.choices[0]);
     console.log(mistralAnswer.choices[0].message.content);
 }
 
