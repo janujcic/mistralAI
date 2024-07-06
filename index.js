@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { config } from 'dotenv';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import MistralClient from '@mistralai/mistralai';
@@ -39,6 +40,40 @@ function getObsidianDocument(path) {
     const fileContents = readFileContents(path);
     
     return `${fileName}\n\n${fileContents}`;
+}
+
+function getAllFilePaths(folderPath, fileType, fileList=[]) {
+    const filesAndFolders = fs.readdirSync(folderPath);
+
+    filesAndFolders.forEach(item => {
+        const fullPath = path.join(folderPath, item);
+        const stat = fs.statSync(fullPath);
+
+        // If the item is a directory, recursively get its file paths
+        if (stat.isDirectory()) {
+            getAllFilePaths(fullPath, fileType, fileList);
+        } else if (stat.isFile() && path.extname(fullPath) === fileType) {
+            // If the item is a file and matches the file type, add it to the list
+            fileList.push(fullPath);
+        }
+    });
+    return fileList;
+
+}
+
+function getAllObsidianFiles(path, ignoreFolder=".trash") {
+    const allFilePaths = getAllFilePaths(path, ".md");
+    const obsidianFilePaths = allFilePaths.filter(filePath => !filePath.includes(ignoreFolder));
+    let obsidianDocs = [];
+    obsidianFilePaths.forEach(filePath => {
+        const content = getObsidianDocument(filePath);
+        const fileName = extractFileName(filePath);
+        const obsidianFile = {"name":fileName, "content":content};
+
+        obsidianDocs.push(obsidianFile);
+    });
+    return obsidianDocs;
+
 }
 
 async function chunkText(text) {
@@ -99,8 +134,12 @@ async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp
     return chatResponse;
 }
 
+
+
 async function main(path) {
     // uploadChunksToVectorDatabase(path);
+    const obsidianFiles = getAllObsidianFiles(path);
+    console.log(obsidianFiles.length);
 }
 
 main(localPath);
