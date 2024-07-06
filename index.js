@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import MistralClient from '@mistralai/mistralai';
 import { createClient } from '@supabase/supabase-js'
+import { table } from 'node:console';
 
 
 config();
@@ -78,18 +79,18 @@ function getAllObsidianFiles(path, ignoreFolder=".trash") {
 
 async function chunkText(text) {
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 450,
+        chunkSize: 1000,
         chunkOverlap: 40
     });
     const output = await splitter.createDocuments([text]);
     const textArray = output.map(chunk => chunk.pageContent);
-    return [output, textArray];
+    return textArray;
 }
 
 async function createEmbedding(text) {
     const embeddingsResponse = await mistralClient.embeddings({
         model: 'mistral-embed',
-        input: textChunks
+        input: text
     });
     return embeddingsResponse.data[0].embedding;
 }
@@ -114,9 +115,25 @@ async function insertDataSupabase(data, table) {
 
 async function uploadChunksToVectorDatabase(path) {
     const documentContent = getObsidianDocument(path);
-    const [chunksOutput, chunks] = await chunkText(documentContent);
+    const chunks = await chunkText(documentContent);
     const embeddedChunks = await embedChunks(chunks);
     insertDataSupabase(embeddedChunks, supabaseTable);
+}
+
+async function uploadObsidianChunksToVectorDB(path, table) {
+    const obsidianFiles = getAllObsidianFiles(path);
+    console.log("Obsidian files retrieved: " + obsidianFiles.length);
+    let embeddedObsidianFiles = [];
+    for (const file of obsidianFiles) {
+        const chunks = await chunkText(file["content"]);
+        let embeddedChunks = await embedChunks(chunks);
+        embeddedChunks = embeddedChunks.map(chunk => {
+            chunk["document"] = file["name"]
+            return chunk;
+        });
+        embeddedObsidianFiles = embeddedObsidianFiles.concat(embeddedChunks);
+    }
+    insertDataSupabase(embeddedObsidianFiles, table);
 }
 
 async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp=0.6, responseFormat="json_object") {
@@ -136,10 +153,8 @@ async function mistralChat(systemInstr, userInstr, model="open-mistral-7b", temp
 
 
 
-async function main(path) {
-    // uploadChunksToVectorDatabase(path);
-    const obsidianFiles = getAllObsidianFiles(path);
-    console.log(obsidianFiles.length);
+async function main(path, table) { 
+    //uploadObsidianChunksToVectorDB(path, table);
 }
 
-main(localPath);
+main(localPath, supabaseTable);
