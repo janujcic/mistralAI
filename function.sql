@@ -5,7 +5,7 @@ create or replace function match_obsidian_docs (
 )
 returns table (
   id bigint,
-  title text,
+  content text,
   document text,
   similarity float
 )
