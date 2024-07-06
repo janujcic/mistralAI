@@ -6,18 +6,18 @@ create or replace function match_obsidian_docs (
 returns table (
   id bigint,
   title text,
-  body text,
+  document text,
   similarity float
 )
 language sql stable
 as $$
   select
-    documents.id,
-    documents.title,
-    documents.body,
-    1 - (documents.embedding <=> query_embedding) as similarity
-  from documents
-  where 1 - (documents.embedding <=> query_embedding) > match_threshold
-  order by (documents.embedding <=> query_embedding) asc
+    obsidian_docs.id,
+    obsidian_docs.content,
+    obsidian_docs.document,
+    1 - (obsidian_docs.embedding <=> query_embedding) as similarity
+  from obsidian_docs
+  where 1 - (obsidian_docs.embedding <=> query_embedding) > match_threshold
+  order by (obsidian_docs.embedding <=> query_embedding) asc
   limit match_count;
 $$;
